@@ -6,6 +6,8 @@
 #
 # Author:: Adam Jacob (<adam@hjksolutions.com>)
 # Author:: Omry Yadan (<omry@yadan.net>)
+# Author:: Jan Mara (<jan.mara@krankikom.de>)
+#
 # Copyright:: Copyright (c) 2008 HJK Solutions, LLC
 # License:: GNU General Public License version 2 or later
 # 
@@ -65,7 +67,7 @@ class Munin
 					stop = true
 				else
 					response << line 
-					stop = true if cmd == "list"
+					stop = true if cmd =~ /^list(.*)/
 				end
 			else
 				error("Nil line received from munin in response to #{cmd}")
@@ -139,7 +141,6 @@ munin_error = false
 carbon_error = false
 while true
 	fetch_start = Time.now.to_f
-	metric_base = "servers."
 	all_metrics = Array.new
 
 	begin
@@ -150,15 +151,17 @@ while true
 		end
 		mname = "unknown"
 		munin.get_response("nodes").each do |node|
+			metric_base = "servers."
+
 			metric_base << node.split(".").reverse.join(".")
-#			if ($options[:verbose])
-#				info("Doing #{metric_base}")
-#			end
-			munin.get_response("list")[0].split(" ").each do |metric|
+			if ($options[:verbose])
+				info("Doing #{metric_base}")
+			end
+			munin.get_response("list #{node}")[0].split(" ").each do |metric|
 				metric = metric.gsub(' ','_')
-#				if ($options[:verbose])
-#					info("Grabbing #{metric}")
-#				end
+				if ($options[:verbose])
+					info("Grabbing #{metric}")
+				end
 				mname = "#{metric_base}"
 				has_category = false
 				base = false
